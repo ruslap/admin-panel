@@ -109,7 +109,7 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
     };
 
     const handleClear = async () => {
-        if (!confirm("Are you sure you want to clear all messages in this chat?")) return;
+        // Temporarily removed confirm dialog for testing
         try {
             const res = await fetch(`${apiUrl}/chats/${chatId}/clear`, {
                 method: 'DELETE',
@@ -132,7 +132,7 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
     };
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this conversation? This cannot be undone.")) return;
+        // Temporarily removed confirm dialog for testing
         try {
             const res = await fetch(`${apiUrl}/chats/${chatId}`, {
                 method: 'DELETE',
