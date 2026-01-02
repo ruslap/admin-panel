@@ -33,6 +33,7 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
     const { data: session } = useSession();
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
+    const [showConfirm, setShowConfirm] = useState<'clear' | 'delete' | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Configurable API URL for flexibility between local/prod
@@ -109,7 +110,6 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
     };
 
     const handleClear = async () => {
-        // Temporarily removed confirm dialog for testing
         try {
             const res = await fetch(`${apiUrl}/chats/${chatId}/clear`, {
                 method: 'DELETE',
@@ -120,6 +120,7 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
             if (res.ok) {
                 setMessages([]);
                 onClearMessages?.(chatId);
+                setShowConfirm(null);
             } else if (res.status === 404) {
                 alert("Error 404: The backend server does not have this feature yet. If you are using Render, please deploy your latest changes. If testing locally, ensure you have set localStorage.setItem('chtq_api_url', 'http://localhost:3000').");
             } else {
@@ -132,7 +133,6 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
     };
 
     const handleDelete = async () => {
-        // Temporarily removed confirm dialog for testing
         try {
             const res = await fetch(`${apiUrl}/chats/${chatId}`, {
                 method: 'DELETE',
@@ -142,6 +142,7 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
             });
             if (res.ok) {
                 onDeleteChat?.(chatId);
+                setShowConfirm(null);
             } else if (res.status === 404) {
                 alert("Error 404: The backend server does not have this feature yet. If you are using Render, please deploy your latest changes. If testing locally, ensure you have set localStorage.setItem('chtq_api_url', 'http://localhost:3000').");
             } else {
@@ -177,7 +178,7 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={handleClear}
+                        onClick={() => setShowConfirm('clear')}
                         title="Clear History"
                         className="h-9 w-9 p-0 rounded-lg hover:bg-[rgb(var(--surface-muted))] text-[rgb(var(--foreground-secondary))] hover:text-amber-500"
                     >
@@ -186,7 +187,7 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={handleDelete}
+                        onClick={() => setShowConfirm('delete')}
                         title="Delete Conversation"
                         className="h-9 w-9 p-0 rounded-lg hover:bg-[rgb(var(--surface-muted))] text-[rgb(var(--foreground-secondary))] hover:text-red-500"
                     >
@@ -303,6 +304,37 @@ export function ChatView({ chat, socket, siteId, onDeleteChat, onClearMessages }
                     </div>
                 </div>
             </div>
+
+            {/* Confirmation Dialog */}
+            {showConfirm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in" onClick={() => setShowConfirm(null)}>
+                    <div className="bg-[rgb(var(--surface))] rounded-2xl border border-[rgb(var(--border))] p-6 max-w-sm mx-4 shadow-2xl animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-lg font-semibold text-[rgb(var(--foreground))] mb-2">
+                            {showConfirm === 'clear' ? 'Clear Chat History?' : 'Delete Conversation?'}
+                        </h3>
+                        <p className="text-sm text-[rgb(var(--foreground-secondary))] mb-6">
+                            {showConfirm === 'clear'
+                                ? 'All messages in this chat will be permanently deleted.'
+                                : 'This conversation will be permanently deleted and cannot be recovered.'}
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <Button
+                                variant="ghost"
+                                onClick={() => setShowConfirm(null)}
+                                className="h-10 px-4 rounded-xl hover:bg-[rgb(var(--surface-muted))]"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={showConfirm === 'clear' ? handleClear : handleDelete}
+                                className={`h-10 px-4 rounded-xl text-white ${showConfirm === 'clear' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-red-500 hover:bg-red-600'}`}
+                            >
+                                {showConfirm === 'clear' ? 'Clear History' : 'Delete'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
